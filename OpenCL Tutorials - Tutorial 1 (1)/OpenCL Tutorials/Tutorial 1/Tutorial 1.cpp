@@ -51,8 +51,8 @@ int main(int argc, char **argv) {
 
 		//Part 4 - memory allocation
 		//host - input
-		std::vector<int> A(1000);//C++11 allows this type of initialisation
-		std::vector<int> B(1000);
+		std::vector<int> A = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }; //C++11 allows this type of initialisation
+		std::vector<int> B = { 0, 1, 2, 0, 1, 2, 0, 1, 2, 0 };
 		
 		size_t vector_elements = A.size();//number of elements
 		size_t vector_size = A.size()*sizeof(int);//size in bytes
@@ -74,29 +74,36 @@ int main(int argc, char **argv) {
 		queue.enqueueWriteBuffer(buffer_B, CL_TRUE, 0, vector_size, &B[0], NULL, &B_Event);
 
 		//5.2 Setup and execute the kernel (i.e. device code)
+		cl::Kernel kernel_multi = cl::Kernel(program, "multi");
+		kernel_multi.setArg(0, buffer_A);
+		kernel_multi.setArg(1, buffer_B);
+		kernel_multi.setArg(2, buffer_C);
+
 		cl::Kernel kernel_add = cl::Kernel(program, "add");
-		kernel_add.setArg(0, buffer_A);
+		kernel_add.setArg(0, buffer_C);
 		kernel_add.setArg(1, buffer_B);
-		kernel_add.setArg(2, buffer_C);
+		kernel_add.setArg(2, buffer_A);
+
 
 		cl::Event kernel_event;
-		queue.enqueueNDRangeKernel(kernel_add, cl::NullRange, cl::NDRange(vector_elements), cl::NullRange, NULL, &kernel_event);
+		queue.enqueueNDRangeKernel(kernel_multi, cl::NullRange,
+		cl::NDRange(vector_elements), cl::NullRange);
+		queue.enqueueNDRangeKernel(kernel_add, cl::NullRange,
+		cl::NDRange(vector_elements), cl::NullRange);
+
 
 		//5.3 Copy the result from device to host
 		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, vector_size, &C[0]);
 
-		std::cout << "A = " << A << std::endl;
+		std::cout << "\nA = " << A << std::endl;
 		std::cout << "B = " << B << std::endl;
 		std::cout << "C = " << C << std::endl;
-		std::cout << "Kernel execution time[ns]:" << kernel_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - kernel_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
-		std::cout << GetFullProfilingInfo(kernel_event, ProfilingResolution::PROF_US) << endl;
-		std::cout << GetFullProfilingInfo(A_Event, ProfilingResolution::PROF_US) << endl;
-		std::cout << GetFullProfilingInfo(B_Event, ProfilingResolution::PROF_US) << endl;
 	}
 	catch (cl::Error err) {
 		std::cerr << "ERROR: " << err.what() << ", " << getErrorString(err.err()) << std::endl;
 	}
 
-	
+	system("pause");
 	return 0;
+	
 }
