@@ -51,14 +51,14 @@ int main(int argc, char **argv) {
 
 		//Part 4 - memory allocation
 		//host - input
-		std::vector<int> A = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }; //C++11 allows this type of initialisation
-		std::vector<int> B = { 0, 1, 2, 0, 1, 2, 0, 1, 2, 0 };
+		std::vector<float> A = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }; //C++11 allows this type of initialisation
+		std::vector<float> B = { 0, 1, 2, 0, 1, 2, 0, 1, 2, 0 };
 		
 		size_t vector_elements = A.size();//number of elements
-		size_t vector_size = A.size()*sizeof(int);//size in bytes
+		size_t vector_size = A.size()*sizeof(float);//size in bytes
 
 		//host - output
-		std::vector<int> C(vector_elements);
+		std::vector<float> C(vector_elements);
 
 		//device - buffers
 		cl::Buffer buffer_A(context, CL_MEM_READ_WRITE, vector_size);
@@ -74,22 +74,26 @@ int main(int argc, char **argv) {
 		queue.enqueueWriteBuffer(buffer_B, CL_TRUE, 0, vector_size, &B[0], NULL, &B_Event);
 
 		//5.2 Setup and execute the kernel (i.e. device code)
-		cl::Kernel kernel_multi = cl::Kernel(program, "multi");
-		kernel_multi.setArg(0, buffer_A);
-		kernel_multi.setArg(1, buffer_B);
-		kernel_multi.setArg(2, buffer_C);
+		//cl::Kernel kernel_multi = cl::Kernel(program, "multi");
+		//kernel_multi.setArg(0, buffer_A);
+		//kernel_multi.setArg(1, buffer_B);
+		//kernel_multi.setArg(2, buffer_C);
 
-		cl::Kernel kernel_add = cl::Kernel(program, "add");
-		kernel_add.setArg(0, buffer_C);
-		kernel_add.setArg(1, buffer_B);
-		kernel_add.setArg(2, buffer_A);
+		//cl::Kernel kernel_add = cl::Kernel(program, "add");
+		//kernel_add.setArg(0, buffer_C);
+		//kernel_add.setArg(1, buffer_B);
+		//kernel_add.setArg(2, buffer_C);
+
+		cl::Kernel kernel_multiAdd = cl::Kernel(program, "multiAdd");
+		kernel_multiAdd.setArg(0, buffer_A);
+		kernel_multiAdd.setArg(1, buffer_B);
+		kernel_multiAdd.setArg(2, buffer_C);
 
 
 		cl::Event kernel_event;
-		queue.enqueueNDRangeKernel(kernel_multi, cl::NullRange,
-		cl::NDRange(vector_elements), cl::NullRange);
-		queue.enqueueNDRangeKernel(kernel_add, cl::NullRange,
-		cl::NDRange(vector_elements), cl::NullRange);
+		//queue.enqueueNDRangeKernel(kernel_multi, cl::NullRange, cl::NDRange(vector_elements), cl::NullRange);
+		queue.enqueueNDRangeKernel(kernel_multiAdd, cl::NullRange, cl::NDRange(vector_elements), cl::NullRange);
+		//queue.enqueueNDRangeKernel(kernel_add, cl::NullRange, cl::NDRange(vector_elements), cl::NullRange);
 
 
 		//5.3 Copy the result from device to host
