@@ -176,12 +176,14 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ReadingData.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <Intel_OpenCL_Build_Rules Include="my_kernels.cl" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ReadingData.cpp" />
     <ClCompile Include="Tutorial 3.cpp" />
   </ItemGroup>
   <ItemGroup>

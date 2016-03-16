@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include "ReadingData.h"
 
 #ifdef __APPLE__
 #include <OpenCL/cl.hpp>
@@ -68,6 +69,9 @@ int main(int argc, char **argv) {
 		//Part 4 - memory allocation
 		//host - input
 		std::vector<mytype> A = {8, 9, 7, 5, 1, 4, 0, 2, 3, 6};
+		std::vector<mytype> smallDataType (20000);
+
+		ReadingSmallData(smallDataType);
 		//std::vector<mytype> A(10, 1);//allocate 10 elements with an initial value 1 - their sum is 10 so it should be easy to check the results!
 
 		//the following part adjusts the length of the input vector so it can be run for a specific workgroup size
