@@ -19,7 +19,7 @@
 
 using namespace std;
 
-void ReadingSmallData(std::vector<int> smallData)
+void ReadingSmallData(std::vector<double>& smallData)
 {
 	ifstream myLogFile;
 	string line;
@@ -34,8 +34,9 @@ void ReadingSmallData(std::vector<int> smallData)
 		in >> type;
 		float a, b, c, d, e;
 		in >> a >> b >> c >> d >> e;
-		cout << "Cunt: " << e << endl;
-		smallData[i] = e;
+		smallData.push_back (e);
 		i++;
 	}
+	cout << "Values Read in: " << i << endl;
+	myLogFile.close();
 }

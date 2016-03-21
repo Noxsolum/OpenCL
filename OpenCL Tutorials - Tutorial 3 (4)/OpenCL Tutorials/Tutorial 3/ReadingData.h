@@ -12,6 +12,6 @@
 #include <CL/cl.hpp>
 #endif
 
-typedef int mytype;
+typedef double mytype;
 
-void ReadingSmallData(std::vector<mytype> smallData);
+void ReadingSmallData(std::vector<mytype>& smallData);

@@ -1,5 +1,5 @@
 ﻿//fixed 4 step reduce
-__kernel void reduce_add_1(__global const int* A, __global int* B) {
+__kernel void reduce_add_1(__global const double* A, __global double* B) {
 	int id = get_global_id(0);
 	int N = get_global_size(0);
 
@@ -12,10 +12,9 @@ __kernel void reduce_add_1(__global const int* A, __global int* B) {
 	//we also check if the added element is within bounds (i.e. < N)
 	if (((id % 2) == 0) && ((id + 1) < N)) 
 		B[id] += B[id + 1];
-
 	barrier(CLK_GLOBAL_MEM_FENCE);
 
-	if (((id % 4) == 0) && ((id + 2) < N)) 
+	if (((id % 4) == 0) && ((id + 2) < N))
 		B[id] += B[id + 2];
 
 	barrier(CLK_GLOBAL_MEM_FENCE);
@@ -30,7 +29,7 @@ __kernel void reduce_add_1(__global const int* A, __global int* B) {
 }
 
 //flexible step reduce 
-__kernel void reduce_add_2(__global const int* A, __global int* B) {
+__kernel void reduce_add_2(__global const double* A, __global double* B) {
 	int id = get_global_id(0);
 	int N = get_global_size(0);
 
@@ -157,53 +156,79 @@ __kernel void scan_add_adjust(__global int* A, __global const int* B) {
 	A[id] += B[gid];
 }
 
+// ===================
 // Assignment stuff!!
-__kernel void min_temp(__global const int* A, __global int* B) {
-	int id = get_global_id(0);
-	int N = get_global_id(0);
-	int Min;
+// ===================
 
-	B[id] = A[id];
-	Min = A[id];
+__kernel void reduce_min(__global const double* A, __global double* B) {
+	int id = get_global_id(0);
+	int N = get_global_size(0);
 	
-	for( int i = 0; i < N; i++)
-	{
-		if (A[i] < Min)
+	B[id] = A[id];
+
+	barrier(CLK_GLOBAL_MEM_FENCE);
+
+	for (int i = 1; i < N; i *= 2) { //i is a stride
+		if (!(id % (i * 2)) && ((id + i) < N))
 		{
-			Min = A[i];
+			if(B[id] > B[id + i])
+			{
+				B[id] = B[id + i];
+			}
 		}
-		B[id] = Min;
+		barrier(CLK_GLOBAL_MEM_FENCE);
 	}
 }
 
-__kernel void max_temp(__global const int* A, __global int* B) {
+__kernel void reduce_max(__global const double* A, __global double* B) {
 	int id = get_global_id(0);
-	int N = get_global_id(0);
-	int Max;
-
-	B[id] = A[id];
-	Max = A[id];
+	int N = get_global_size(0);
 	
-	for( int i = 0; i < N; i++)
-	{
-		if (A[i] > Max)
+	B[id] = A[id];
+
+	barrier(CLK_GLOBAL_MEM_FENCE);
+
+	for (int i = 1; i < N; i *= 2) { //i is a stride
+		if (!(id % (i * 2)) && ((id + i) < N))
 		{
-			Max = A[i];
+			if(B[id] < B[id + i])
+			{
+				B[id] = B[id + i];
+			}
 		}
-		B[id] = Max;
+		barrier(CLK_GLOBAL_MEM_FENCE);
 	}
 }
 
-__kernel void aver_temp(__global const int* A, __global int* B) {
+__kernel void reduce_Average(__global const double* A, __global double* B) {
 	int id = get_global_id(0);
-	int N = get_global_id(0);
-	int x = 0;
-
-	B[id] = A[id];
+	int N = get_global_size(0);
 	
-	for( int i = 0; i < N; i++)
-	{
-		x = x + A[i];
+	B[id] = A[id];
+
+	barrier(CLK_GLOBAL_MEM_FENCE);
+
+	for (int i = 1; i < N; i *= 2) {
+		if (!(id % (i * 2)) && ((id + i) < N)) 
+			B[id] = B[id] + B[id + i];
+
+		barrier(CLK_GLOBAL_MEM_FENCE);
 	}
-	B[id] = x/N;
+	//B[0] = B[0]/N;
+}
+
+__kernel void reduce_Aver(__global const double* A, __global double* B) {
+	int id = get_global_id(0);
+	int N = get_global_size(0);
+	double x = 0;
+	int i = 0;
+	
+	B[id] = A[id];
+
+	for(int i = 0; i < N; i++)
+	{
+		x = x + B[i];
+	}
+
+	B[0] = x;
 }

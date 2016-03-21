@@ -64,21 +64,30 @@ int main(int argc, char **argv) {
 			throw err;
 		}
 
-		typedef int mytype;
+		typedef double mytype;
 
 		//Part 4 - memory allocation
 		//host - input
-		std::vector<mytype> A = {8, 9, 7, 5, 1, 4, 0, 2, 3, 6};
-		std::vector<mytype> smallDataType (20000);
-
+		std::vector<mytype> A = {8, 9, 7, -5, 1, 4, -2, 2, 3, 6};
+		std::vector<mytype> smallDataType;
 		ReadingSmallData(smallDataType);
+		cout << "Lets Go!" << endl;
 		//std::vector<mytype> A(10, 1);//allocate 10 elements with an initial value 1 - their sum is 10 so it should be easy to check the results!
 
-		//the following part adjusts the length of the input vector so it can be run for a specific workgroup size
-		//if the total input length is divisible by the workgroup size
-		//this makes the code more efficient
-		size_t local_size = 10;
+		size_t newInput_elements = smallDataType.size();
+		cout << "How many in Array: " << smallDataType.size() << endl;
+		size_t newInput_size = smallDataType.size()*sizeof(mytype);
+		//size_t newNr_groups = newInput_size / local_size;
 
+		std::vector<mytype> B(newInput_elements);
+		size_t newOutput_size = B.size()*sizeof(mytype);
+
+		// =============
+		// Regular Data
+		// =============
+		
+		///*
+		size_t local_size = 10;
 		size_t padding_size = A.size() % local_size;
 
 		//if the input vector is not a multiple of the local_size
@@ -95,36 +104,35 @@ int main(int argc, char **argv) {
 		size_t nr_groups = input_elements / local_size;
 
 		//host - output
-		std::vector<mytype> B(input_elements);
-		size_t output_size = B.size()*sizeof(mytype);//size in bytes
+		//std::vector<mytype> B(input_elements);
+		//size_t output_size = B.size()*sizeof(mytype);//size in bytes
+		//*/
 
-		//profiling - excution times
 		cl::Event kernel_event;
 
-		//device - buffers
-		cl::Buffer buffer_A(context, CL_MEM_READ_ONLY, input_size);
-		cl::Buffer buffer_B(context, CL_MEM_READ_WRITE, output_size);
-
-		//Part 5 - device operations
-
-		//5.1 copy array A to and initialise other arrays on device memory
-		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, input_size, &A[0]);
-		queue.enqueueFillBuffer(buffer_B, 0, 0, output_size);//zero B buffer on device memory
-
-		//5.2 Setup and execute all kernels (i.e. device code)
-		cl::Kernel kernel_1 = cl::Kernel(program, "reduce_add_1");
+		cl::Buffer buffer_A(context, CL_MEM_READ_ONLY, newInput_size);
+		cl::Buffer buffer_B(context, CL_MEM_READ_WRITE, newOutput_size);
+		
+		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, newInput_size, &smallDataType[0]);
+		queue.enqueueFillBuffer(buffer_B, 0, 0, newOutput_size);//zero B buffer on device memory
+		// ===================
+		// Excute the kernals
+		// ===================
+		//cl::Kernel kernel_1 = cl::Kernel(program, "reduce_max");
+		//cl::Kernel kernel_1 = cl::Kernel(program, "reduce_min");
+		//cl::Kernel kernel_1 = cl::Kernel(program, "reduce_Aver");
+		cl::Kernel kernel_1 = cl::Kernel(program, "reduce_Average");
+		//cl::Kernel kernel_1 = cl::Kernel(program, "reduce_add_1");
 		kernel_1.setArg(0, buffer_A);
 		kernel_1.setArg(1, buffer_B);
 		//kernel_1.setArg(2, cl::Local(local_size*sizeof(mytype)));//local memory size
 
-		//call all kernels in a sequence
-		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &kernel_event);
+		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(newInput_elements), cl::NullRange, NULL, &kernel_event);
 
-		//5.3 Copy the result from device to host
-		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, output_size, &B[0]);
+		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, newOutput_size, &B[0]);
 
-		std::cout << "A = " << A << std::endl;
-		std::cout << "B = " << B << std::endl;
+		//std::cout << "A = " << smallDataType << std::endl;
+		std::cout << "B = " << B[0] << std::endl;
 
 		std::cout << "Kernel execution time [ns]:" << kernel_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - kernel_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
 	}
