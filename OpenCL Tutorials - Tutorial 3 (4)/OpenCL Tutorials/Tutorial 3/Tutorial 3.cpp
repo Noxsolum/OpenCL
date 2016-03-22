@@ -65,74 +65,150 @@ int main(int argc, char **argv) {
 		}
 
 		typedef double mytype;
+		typedef int mytype2;
 
-		//Part 4 - memory allocation
-		//host - input
-		std::vector<mytype> A = {8, 9, 7, -5, 1, 4, -2, 2, 3, 6};
-		std::vector<mytype> smallDataType;
-		ReadingSmallData(smallDataType);
+		// ======
+		// Input
+		// ======
+		std::vector<mytype> A = {8.2, 9.1, 7, -5, 1, 4, -2, 2, 3, 6};
+		std::vector<mytype> sDT;
+		std::vector<mytype> lDT;
+		ReadingSmallData(sDT);
+		std::vector<mytype2> sDTMean;
+		std::vector<mytype> outputsDT;
 		cout << "Lets Go!" << endl;
-		//std::vector<mytype> A(10, 1);//allocate 10 elements with an initial value 1 - their sum is 10 so it should be easy to check the results!
 
-		size_t newInput_elements = smallDataType.size();
-		cout << "How many in Array: " << smallDataType.size() << endl;
-		size_t newInput_size = smallDataType.size()*sizeof(mytype);
-		//size_t newNr_groups = newInput_size / local_size;
+		for (int i = 0; i < 18732; i++)
+		{
+			sDTMean.push_back (sDT[i] * 10);
+		}
 
-		std::vector<mytype> B(newInput_elements);
-		size_t newOutput_size = B.size()*sizeof(mytype);
+		//cout << sDTMean << endl;
+
+		// ================
+		// Assignment Data
+		// ================
+		//size_t newLocal_size = 223;
+		//size_t newPadding_size = sDT.size() % newLocal_size;
+
+		//if (newPadding_size)
+		//{
+		//	std::vector<int> smallDataType_ext(newLocal_size - newPadding_size, 0);
+		//	sDT.insert(sDT.end(), smallDataType_ext.begin(), smallDataType_ext.end());
+		//}
+
+		//size_t newInput_elements = sDT.size();
+		//cout << "How many in Array: " << sDT.size() << endl;
+		//size_t newInput_size = sDT.size()*sizeof(mytype2);
+		//size_t newNr_groups = newInput_size / newLocal_size;
+
+		//std::vector<mytype2> newOutput(newInput_elements);
+		//size_t newOutput_size = newOutput.size()*sizeof(mytype2);
+
+		// ---------
+		// For Mean
+		// ---------
+
+		size_t newLocal_size = 223;
+		size_t newPadding_size = sDTMean.size() % newLocal_size;
+
+		if (newPadding_size)
+		{
+			std::vector<int> smallDataType_ext(newLocal_size - newPadding_size, 0);
+			sDTMean.insert(sDTMean.end(), smallDataType_ext.begin(), smallDataType_ext.end());
+		}
+
+		size_t newInput_elements = sDTMean.size();
+		cout << "How many in Array: " << sDTMean.size() << endl;
+		size_t newInput_size = sDTMean.size()*sizeof(mytype2);
+		size_t newNr_groups = newInput_size / newLocal_size;
+
+		std::vector<mytype2> newOutput(newInput_elements);
+		size_t newOutput_size = newOutput.size()*sizeof(mytype2);
 
 		// =============
 		// Regular Data
 		// =============
-		
-		///*
-		size_t local_size = 10;
-		size_t padding_size = A.size() % local_size;
+		//size_t local_size = 10;
+		//size_t padding_size = A.size() % local_size;
 
-		//if the input vector is not a multiple of the local_size
-		//insert additional neutral elements (0 for addition) so that the total will not be affected
-		if (padding_size) {
-			//create an extra vector with neutral values
-			std::vector<int> A_ext(local_size-padding_size, 0);
-			//append that extra vector to our input
-			A.insert(A.end(), A_ext.begin(), A_ext.end());
-		}
+		//if (padding_size) 
+		//{
+		//	std::vector<int> A_ext(local_size-padding_size, 0);
+		//	A.insert(A.end(), A_ext.begin(), A_ext.end());
+		//}
 
-		size_t input_elements = A.size();//number of input elements
-		size_t input_size = A.size()*sizeof(mytype);//size in bytes
-		size_t nr_groups = input_elements / local_size;
+		//size_t input_elements = A.size();
+		//cout << "How many in Array: " << smallDataType.size() << endl;
+		//size_t input_size = A.size()*sizeof(mytype);
+		//size_t nr_groups = input_elements / local_size;
 
-		//host - output
 		//std::vector<mytype> B(input_elements);
-		//size_t output_size = B.size()*sizeof(mytype);//size in bytes
-		//*/
+		//size_t output_size = B.size()*sizeof(mytype);
 
+		// ==================
+		// Kernel Events New
+		// ==================
 		cl::Event kernel_event;
-
 		cl::Buffer buffer_A(context, CL_MEM_READ_ONLY, newInput_size);
 		cl::Buffer buffer_B(context, CL_MEM_READ_WRITE, newOutput_size);
 		
-		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, newInput_size, &smallDataType[0]);
-		queue.enqueueFillBuffer(buffer_B, 0, 0, newOutput_size);//zero B buffer on device memory
+		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, newInput_size, &sDTMean[0]);
+		queue.enqueueFillBuffer(buffer_B, 0, 0, newOutput_size);
+
+		// ==================
+		// Kernel Events Old
+		// ==================
+		//cl::Event kernel_event;
+		//cl::Buffer buffer_A(context, CL_MEM_READ_ONLY, input_size);
+		//cl::Buffer buffer_B(context, CL_MEM_READ_WRITE, output_size);
+
+		//queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, input_size, &A[0]);
+		//queue.enqueueFillBuffer(buffer_B, 0, 0, output_size);
+
 		// ===================
 		// Excute the kernals
 		// ===================
 		//cl::Kernel kernel_1 = cl::Kernel(program, "reduce_max");
 		//cl::Kernel kernel_1 = cl::Kernel(program, "reduce_min");
 		//cl::Kernel kernel_1 = cl::Kernel(program, "reduce_Aver");
-		cl::Kernel kernel_1 = cl::Kernel(program, "reduce_Average");
-		//cl::Kernel kernel_1 = cl::Kernel(program, "reduce_add_1");
+		cl::Kernel kernel_1 = cl::Kernel(program, "reduce_average");
+
+		// =======================
+		// More Kernel Events Old
+		// =======================
+		//kernel_1.setArg(0, buffer_A);
+		//kernel_1.setArg(1, buffer_B);
+		//kernel_1.setArg(2, cl::Local(local_size*sizeof(mytype)));
+
+		//queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(local_size), NULL, &kernel_event);
+		//queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, output_size, &B[0]);
+
+		// =======================
+		// More Kernel Events New
+		// =======================
 		kernel_1.setArg(0, buffer_A);
 		kernel_1.setArg(1, buffer_B);
-		//kernel_1.setArg(2, cl::Local(local_size*sizeof(mytype)));//local memory size
+		kernel_1.setArg(2, cl::Local(newLocal_size*sizeof(mytype2)));
 
-		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(newInput_elements), cl::NullRange, NULL, &kernel_event);
+		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(newInput_elements), cl::NDRange(newLocal_size), NULL, &kernel_event);
+		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, newOutput_size, &newOutput[0]);
 
-		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, newOutput_size, &B[0]);
+		//cout << newOutput << endl;
 
-		//std::cout << "A = " << smallDataType << std::endl;
-		std::cout << "B = " << B[0] << std::endl;
+		for (int j = 0; j < 18732; j++)
+		{
+			outputsDT.push_back (newOutput[j] / 10);
+		}
+		outputsDT[0] = outputsDT[0] / newOutput.size();
+
+		// =======
+		// Output
+		// =======
+		//std::cout << "A = " << sDT << std::endl;
+		std::cout << "B = " << outputsDT[0] << std::endl;
+		//std::cout << "A = " << A << std::endl;
+		//std::cout << "B = " << B << std::endl;
 
 		std::cout << "Kernel execution time [ns]:" << kernel_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - kernel_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
 	}
