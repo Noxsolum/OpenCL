@@ -200,7 +200,6 @@ __kernel void reduce_max(__global const double* A, __global double* B) {
 
 __kernel void reduce_average(__global const int* A, __global int* B, __local int* scratch) {
 	int id = get_global_id(0);
-	int X = get_global_size(0);
 	int lid = get_local_id(0);
 	int N = get_local_size(0);
 
@@ -217,8 +216,37 @@ __kernel void reduce_average(__global const int* A, __global int* B, __local int
 		barrier(CLK_LOCAL_MEM_FENCE);
 	}
 
-	if (!lid) {
+	if (!lid) 
+	{
 		atomic_add(&B[0],scratch[lid]);
 	}
-	B[0] = B[0] / X;
+}
+
+__kernel void reduce_max2(__global const int* A, __global int* B, __local int* scratch) {
+	int id = get_global_id(0);
+	int lid = get_local_id(0);
+	int N = get_local_size(0);
+
+	//cache all N values from global memory to local memory
+
+	scratch[lid] = A[id];
+
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	for (int i = 1; i < N; i *= 2) 
+	{
+		if (!(lid % (i * 2)) && ((lid + i) < N))
+		{
+			if(scratch[lid] < scratch[lid + i])
+			{
+				scratch[lid] = scratch[id + 1];
+			}
+		}
+		barrier(CLK_LOCAL_MEM_FENCE);
+	}
+
+	if (!lid) 
+	{
+		atomic_max(&B[0],scratch[lid]);
+	}
 }

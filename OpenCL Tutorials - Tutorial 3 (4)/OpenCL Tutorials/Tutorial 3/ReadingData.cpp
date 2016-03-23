@@ -21,7 +21,8 @@ void ReadingSmallData(std::vector<double>& smallData)
 {
 	ifstream myLogFile;
 	string line;
-	myLogFile.open("C:\\Users\\Computing\\Documents\\GitHub\\OpenCL\\OpenCL Tutorials - Tutorial 3 (4)\\OpenCL Tutorials\\temp_lincolnshire_short.txt");
+	//myLogFile.open("C:\\Users\\Computing\\Documents\\GitHub\\OpenCL\\OpenCL Tutorials - Tutorial 3 (4)\\OpenCL Tutorials\\temp_lincolnshire_short.txt");
+	myLogFile.open("C:\\Users\\Computing\\Documents\\GitHub\\OpenCL\\OpenCL Tutorials - Tutorial 3 (4)\\OpenCL Tutorials\\temp_lincolnshire.txt");
 
 	cout << "Begins Reading Data!" << endl;
 	int i = 0;
@@ -32,6 +33,7 @@ void ReadingSmallData(std::vector<double>& smallData)
 		in >> type;
 		float a, b, c, d, e;
 		in >> a >> b >> c >> d >> e;
+		//cout << e << endl;
 		smallData.push_back (e);
 		i++;
 	}

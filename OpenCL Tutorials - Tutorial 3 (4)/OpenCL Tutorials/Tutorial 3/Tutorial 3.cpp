@@ -67,6 +67,15 @@ int main(int argc, char **argv) {
 		typedef double mytype;
 		typedef int mytype2;
 
+		// ===========
+		// Data Sizes
+		// ===========
+
+		int largeSize = 1873106;
+		int smallSize = 18732;
+		int smallSizeLocal = 223;
+		int largeSizeLocal = 4531;
+
 		// ======
 		// Input
 		// ======
@@ -78,7 +87,7 @@ int main(int argc, char **argv) {
 		std::vector<mytype> outputsDT;
 		cout << "Lets Go!" << endl;
 
-		for (int i = 0; i < 18732; i++)
+		for (int i = 0; i < 1873106; i++)
 		{
 			sDTMean.push_back (sDT[i] * 10);
 		}
@@ -93,23 +102,24 @@ int main(int argc, char **argv) {
 
 		//if (newPadding_size)
 		//{
-		//	std::vector<int> smallDataType_ext(newLocal_size - newPadding_size, 0);
-		//	sDT.insert(sDT.end(), smallDataType_ext.begin(), smallDataType_ext.end());
+		//	std::vector<int> sDT_ext(newLocal_size - newPadding_size, 0);
+		//	sDT.insert(sDT.end(), sDT_ext.begin(), sDT_ext.end());
 		//}
 
 		//size_t newInput_elements = sDT.size();
 		//cout << "How many in Array: " << sDT.size() << endl;
-		//size_t newInput_size = sDT.size()*sizeof(mytype2);
+		//size_t newInput_size = sDT.size()*sizeof(mytype);
 		//size_t newNr_groups = newInput_size / newLocal_size;
 
-		//std::vector<mytype2> newOutput(newInput_elements);
-		//size_t newOutput_size = newOutput.size()*sizeof(mytype2);
+		//std::vector<mytype> newOutput(newInput_elements);
+		//size_t newOutput_size = newOutput.size()*sizeof(mytype);
 
 		// ---------
 		// For Mean
 		// ---------
 
-		size_t newLocal_size = 223;
+		size_t newLocal_size = largeSizeLocal;
+		//size_t newLocal_size = smallSizeLocal;
 		size_t newPadding_size = sDTMean.size() % newLocal_size;
 
 		if (newPadding_size)
@@ -169,10 +179,10 @@ int main(int argc, char **argv) {
 		// ===================
 		// Excute the kernals
 		// ===================
-		//cl::Kernel kernel_1 = cl::Kernel(program, "reduce_max");
+		cl::Kernel kernel_1 = cl::Kernel(program, "reduce_max2");
 		//cl::Kernel kernel_1 = cl::Kernel(program, "reduce_min");
 		//cl::Kernel kernel_1 = cl::Kernel(program, "reduce_Aver");
-		cl::Kernel kernel_1 = cl::Kernel(program, "reduce_average");
+		//cl::Kernel kernel_1 = cl::Kernel(program, "reduce_average");
 
 		// =======================
 		// More Kernel Events Old
@@ -189,18 +199,21 @@ int main(int argc, char **argv) {
 		// =======================
 		kernel_1.setArg(0, buffer_A);
 		kernel_1.setArg(1, buffer_B);
-		kernel_1.setArg(2, cl::Local(newLocal_size*sizeof(mytype2)));
+		kernel_1.setArg(2, cl::Local(newLocal_size*sizeof(mytype)));
+
+		int bloop = CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE;
+		cout << "Pref: " << bloop << endl;
 
 		queue.enqueueNDRangeKernel(kernel_1, cl::NullRange, cl::NDRange(newInput_elements), cl::NDRange(newLocal_size), NULL, &kernel_event);
 		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, newOutput_size, &newOutput[0]);
 
 		//cout << newOutput << endl;
 
-		for (int j = 0; j < 18732; j++)
+		for (int j = 0; j < largeSize; j++)
 		{
 			outputsDT.push_back (newOutput[j] / 10);
 		}
-		outputsDT[0] = outputsDT[0] / newOutput.size();
+		//outputsDT[0] = outputsDT[0] / newOutput.size();
 
 		// =======
 		// Output
